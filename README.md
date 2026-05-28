@@ -1,3 +1,10 @@
+---
+title: Sistema Alerta Forestal
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Fire Smoke AI - Sistema de alerta forestal
 
 Aplicacion para detectar `fire` y `smoke` con un modelo YOLOv8 exportado a ONNX, registrar alertas y contextualizarlas sobre un mapa territorial de Gran Canaria con ZARI, combustible, NASA FIRMS y meteorologia AEMET.
@@ -187,6 +194,37 @@ sudo usermod -aG docker $USER
 
 Cierra sesion y vuelve a entrar para que el grupo `docker` aplique.
 
+Si `docker compose version` no existe y `docker-compose` falla con `No module named 'distutils'`, instala Compose v2 manualmente:
+
+```bash
+cd ~
+mkdir -p ~/.docker/cli-plugins
+curl -SL https://github.com/docker/compose/releases/download/v5.1.4/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+chmod +x ~/.docker/cli-plugins/docker-compose
+docker compose version
+```
+
+Si `docker compose` existe pero aparece `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock`, el usuario no tiene permisos sobre Docker. Solucion temporal:
+
+```bash
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo cp ~/.docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+sudo docker compose version
+sudo docker compose up -d --build
+```
+
+Solucion persistente:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+docker ps
+docker compose up -d --build
+```
+
+Si `newgrp docker` no aplica el permiso, cierra sesion en Isard, vuelve a entrar y repite `docker ps`.
+
 4. Clona el repositorio:
 
 ```bash
@@ -265,7 +303,10 @@ Usa un Space con SDK Docker. El `Dockerfile` de la raiz lanza FastAPI, Streamlit
    - Owner: tu usuario.
    - Space name: por ejemplo `sistema-alerta-forestal`.
    - SDK: `Docker`.
+   - Docker template: `Blank`.
    - Hardware: CPU basic para demo.
+   - Storage Bucket: desactivado.
+   - Dev Mode: desactivado.
    - Visibility: public o private.
 4. En `Settings > Variables and secrets`, crea secretos:
    - `AEMET_API_KEY`
@@ -275,7 +316,7 @@ Usa un Space con SDK Docker. El `Dockerfile` de la raiz lanza FastAPI, Streamlit
 
 ```powershell
 git remote add hf https://huggingface.co/spaces/TU_USUARIO/sistema-alerta-forestal
-git push hf main
+git push hf main:main
 ```
 
 Si pide credenciales:
@@ -284,6 +325,12 @@ Si pide credenciales:
 - Password: token de Hugging Face con permiso de escritura.
 
 No pegues el token en archivos ni en el chat.
+
+Si el Space fue creado con plantilla `Blank` y ya tenia un commit inicial, puede rechazar el primer push. En ese caso, solo para un Space recien creado:
+
+```powershell
+git push hf main:main --force
+```
 
 6. En la pagina del Space, abre `Logs` y espera a que termine el build.
 7. Cuando aparezca `Running`, abre la URL publica del Space.
