@@ -5,6 +5,8 @@ services:
       dockerfile: deploy/Dockerfile
     env_file:
       - .env
+    environment:
+      PYTHONPATH: "/app"
     ports:
       - "${API_PORT:-8000}:8000"
     command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -16,6 +18,7 @@ services:
     env_file:
       - .env
     environment:
+      PYTHONPATH: "/app"
       API_INTERNAL_URL: "${API_INTERNAL_URL:-http://api:8000}"
       API_PUBLIC_URL: "${API_PUBLIC_URL:-http://localhost:8000}"
     ports:
