@@ -1045,3 +1045,32 @@ Validacion:
 Limitacion:
 
 - No se pudo construir la imagen Docker localmente porque Docker Desktop no estaba levantado en Windows. La prueba real de contenedor queda pendiente en Isard o al iniciar Docker Desktop.
+
+## Fase 8 - Guia autosuficiente y validacion Docker
+
+Fecha: 2026-05-28
+
+Objetivo: dejar el repositorio listo para que un usuario pueda ejecutar la aplicacion sin asistencia y comprobar las rutas de despliegue.
+
+Acciones:
+
+- Reescrito `README.md` como guia paso a paso: ejecucion local nativa, prueba de imagen, prueba de pantalla/video, Docker local, Isard y Hugging Face Spaces.
+- Eliminado del repositorio el PDF `LuisHernandezRodriguez_Datasets Elegidos.docx.pdf` y anadido a `.gitignore`.
+- Ajustados Dockerfiles a `python:3.11-slim`, necesario por `streamlit-folium>=0.27`.
+- Corregido `COPY` de rutas con espacios usando sintaxis JSON en Docker.
+- Parametrizados puertos de `docker-compose.yml` con `API_PORT` y `DASHBOARD_PORT`.
+- Anadidas `API_INTERNAL_URL` y `API_PUBLIC_URL` a `deploy/.env.example` para despliegues donde el navegador no ve la misma URL que Docker.
+
+Validacion:
+
+- Imagen Docker Compose/Isard construida correctamente con `docker build -f deploy/Dockerfile`.
+- `docker compose up -d --build` probado con puertos alternativos `18000` y `18501`.
+- API Docker Compose: `http://localhost:18000/health` devolvio modelo cargado.
+- Dashboard Docker Compose: `http://localhost:18501/_stcore/health` devolvio `ok`.
+- Imagen Hugging Face construida correctamente con `docker build -f Dockerfile`.
+- Contenedor Hugging Face probado en `http://localhost:17860`: `/health` correcto y dashboard servido por Nginx.
+
+Decision:
+
+- La ruta recomendada para Isard queda como Docker Compose.
+- La ruta recomendada para Hugging Face queda como Space Docker usando el Dockerfile raiz.

@@ -1,72 +1,47 @@
-# Fire Smoke AI - Vigilancia forestal con YOLOv8
+# Fire Smoke AI - Sistema de alerta forestal
 
-Aplicativo local para detectar `fire` y `smoke` con YOLOv8 y contextualizar cada alerta sobre un mapa territorial de Gran Canaria. El proyecto combina tres piezas:
+Aplicacion para detectar `fire` y `smoke` con un modelo YOLOv8 exportado a ONNX, registrar alertas y contextualizarlas sobre un mapa territorial de Gran Canaria con ZARI, combustible, NASA FIRMS y meteorologia AEMET.
 
-- Un modelo de deteccion entrenado con imagenes de fuego, humo y negativos.
-- Una API FastAPI que ejecuta inferencia, registra alertas y calcula riesgo territorial.
-- Un dashboard Streamlit con mapa, KPIs, historial, prueba por imagen y prueba por pantalla/video.
+Proyecto del Trabajo Final del Master de Especializacion en Inteligencia Artificial y Big Data, IES El Rincon.
 
-Forma parte del Trabajo Final del Master de Especializacion en Inteligencia Artificial y Big Data del IES El Rincon.
+## Que incluye el repositorio
 
-## Que puede hacer
+- API FastAPI en `api/`.
+- Dashboard Streamlit en `dashboard/`.
+- Pipeline territorial en `geo_pipeline/`.
+- Modelo activo de demo en `exports/best_fire_smoke.onnx` y `exports/best_fire_smoke.pt`.
+- Datos territoriales necesarios para Gran Canaria: ZARI, NASA FIRMS y combustible de Gran Canaria.
+- Docker Compose para servidor Linux/Isard en `deploy/`.
+- Dockerfile raiz para Hugging Face Spaces Docker.
+- Notebooks y scripts de entrenamiento/reproducibilidad.
+- Registro de decisiones y resultados en `Seguimiento.md`.
 
-- Detectar fuego y humo en imagenes, carpetas, videos, GIFs o pantalla completa.
-- Probar el flujo completo desde una imagen subida al dashboard.
-- Probar un video de YouTube en pantalla completa enviando frames a la API.
-- Registrar alertas en SQLite con clase, confianza, imagen anotada, coordenadas y nivel de riesgo.
-- Calcular riesgo territorial usando ZARI, combustible, historico NASA FIRMS y meteorologia AEMET.
-- Mostrar en mapa capas de ZARI, combustible, hotspots FIRMS, camara simulada y alertas recientes.
-- Seleccionar un foco con click en el mapa y recalcular el riesgo inmediato de su entorno.
-- Reiniciar el historial de alertas desde el dashboard para mantener limpia la demo.
-- Enviar alertas por Telegram si las credenciales estan configuradas.
+No se incluyen `.env`, `.venv`, datasets crudos, datasets procesados, runs de entrenamiento, modelos candidatos ni alertas generadas.
 
-## Estructura principal
+## Requisitos
 
-```text
-.
-|-- api/                         # FastAPI: inferencia, riesgo, alertas y Telegram
-|-- dashboard/                   # Streamlit + Folium
-|-- geo_pipeline/                # Carga territorial, AEMET, FIRMS, ZARI, combustible
-|-- data/
-|   |-- raw/                     # Datos originales extraidos
-|   `-- processed/               # Dataset YOLO final
-|-- Datasets Territoriales/      # FIRMS, ZARI y combustible de Canarias
-|-- models/runs/                 # Runs de entrenamiento YOLO
-|-- exports/                     # Modelo actual .pt y .onnx
-|-- notebooks/                   # Exploracion, preparacion, entrenamiento y territorio
-|-- inference.py                 # Inferencia local directa
-|-- screen_to_api.py             # Utilidad de desarrollo para captura por consola
-|-- Seguimiento.md               # Registro de fases, resultados y decisiones
-`-- README.md
-```
+Para ejecucion local nativa en Windows:
 
-## Instalacion local
+- Python 3.11 o superior.
+- Git.
+- Navegador moderno.
+- Opcional: GPU NVIDIA/CUDA para entrenamiento. La aplicacion desplegada usa ONNX CPU.
 
-Desde la raiz del proyecto:
+Para Docker local, Isard o Hugging Face:
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
+- Docker y Docker Compose.
+- Acceso a red para AEMET y Telegram si se quieren esas integraciones.
 
-El entorno usado en este proyecto incluye GPU NVIDIA RTX 4070, CUDA y Python 3.10+. Para entrenamiento con GPU, comprueba en Python:
+## Variables de entorno
 
-```powershell
-.\.venv\Scripts\python.exe -c "import torch; print(torch.cuda.is_available())"
-```
+El proyecto no sube secretos. Crea un archivo `.env` en la raiz para ejecucion local nativa, o `deploy/.env` para Docker Compose.
 
-## Configuracion
+Ejemplo:
 
-El archivo `.env` local contiene las claves de AEMET y Telegram. No debe subirse ni copiarse a documentacion publica.
-
-Variables importantes:
-
-```text
-AEMET_API_KEY=...
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_ID=...
+```env
+AEMET_API_KEY=pon_aqui_tu_api_key_de_aemet
+TELEGRAM_BOT_TOKEN=pon_aqui_tu_token_de_telegram
+TELEGRAM_CHAT_ID=pon_aqui_tu_chat_id
 MODEL_PATH=exports/best_fire_smoke.onnx
 MODEL_PT_FALLBACK=exports/best_fire_smoke.pt
 CONF_THRESHOLD_FIRE=0.25
@@ -77,109 +52,269 @@ TEMPORAL_MAX_GAP_SECONDS=4
 SIMULATE_RANDOM_ALERT_POINT=1
 ```
 
-`SIMULATE_RANDOM_ALERT_POINT=1` hace que cada alerta se ubique en una coordenada aleatoria dentro de 5 km de la camara simulada. Esto permite demostrar mejor el flujo territorial sin fijar siempre el foco en el mismo punto.
+Notas:
 
-## Arrancar el aplicativo
+- AEMET y Telegram son opcionales para arrancar, pero si no se configuran no habra meteorologia real ni envio de avisos.
+- `ALERT_CONFIRM_SECONDS=5` hace que video/pantalla solo genere alerta si la deteccion persiste durante 5 segundos.
+- En imagenes sueltas se alerta por confianza, porque el tiempo no aplica.
+- `SIMULATE_RANDOM_ALERT_POINT=1` coloca alertas en un punto aleatorio dentro de 5 km de la camara simulada para hacer la demo territorial mas clara.
 
-Terminal 1, API:
+## Ejecucion local nativa
+
+Desde PowerShell:
+
+```powershell
+git clone https://github.com/LHdezLP/sistema_alerta_forestal_petproject.git
+cd sistema_alerta_forestal_petproject
+python -m venv .venv
+.\.venv\Scripts\activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+Copy-Item deploy\.env.example .env
+notepad .env
+```
+
+Arranca la API en una terminal:
 
 ```powershell
 .\.venv\Scripts\python.exe -m uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
-Terminal 2, dashboard:
+Arranca el dashboard en otra terminal:
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run dashboard/app.py --server.address 127.0.0.1 --server.port 8501
 ```
 
-URLs:
+Comprueba:
 
-- API health: http://127.0.0.1:8000/health
-- Riesgo actual: http://127.0.0.1:8000/risk
-- Alertas registradas: http://127.0.0.1:8000/alerts
+- API: http://127.0.0.1:8000/health
+- Documentacion API: http://127.0.0.1:8000/docs
 - Dashboard: http://127.0.0.1:8501
+- Captura de pantalla/video: http://127.0.0.1:8000/screen-capture
 
-## Probar el flujo completo con imagen
+Si `/health` devuelve `{"status":"ok","model_loaded":true,"db_ok":true}`, la API esta cargada.
+
+## Probar una imagen
 
 1. Abre http://127.0.0.1:8501.
-2. En la barra lateral, sube una imagen `.jpg` o `.png`.
+2. En la barra lateral, sube una imagen `.jpg`, `.jpeg` o `.png`.
 3. Pulsa `Analizar imagen`.
-4. Si el modelo detecta fuego o humo, la API:
-   - ejecuta inferencia con `exports/best_fire_smoke.onnx`;
-   - calcula el riesgo territorial para el foco simulado;
-   - guarda la imagen anotada en `api/alert_images/`;
-   - registra la alerta en `api/alerts.db`;
-   - intenta enviar Telegram si las credenciales son validas.
-5. Revisa el historial en el dashboard o abre http://127.0.0.1:8000/alerts.
+4. Si se detecta fuego o humo, la API registra la alerta, guarda la imagen anotada y actualiza el historial.
+5. Si Telegram esta configurado, intenta enviar aviso.
 
-El dashboard no vuelve a analizar la imagen automaticamente en cada refresco. Solo llama a `/predict` cuando se pulsa `Analizar imagen`.
+La imagen no se reenvia automaticamente en cada refresco: solo se analiza al pulsar el boton.
 
-## Analizar riesgo de un foco en el mapa
+## Probar un video o YouTube desde el frontend
 
-El mapa es interactivo:
-
-1. Haz click sobre cualquier punto del mapa.
-2. El dashboard toma ese punto como foco seleccionado.
-3. La API recalcula `/risk` usando esa latitud/longitud.
-4. Los anillos se dibujan alrededor del foco, no alrededor de la camara.
-5. El panel `Riesgo del foco` muestra el indice, la zona ZARI, combustible ponderado y FIRMS historicos del entorno.
-
-Los anillos tienen significado operativo:
-
-- `Riesgo inmediato`: 1 km alrededor del foco, mas oscuro.
-- `Riesgo alto`: 2.5 km, intermedio.
-- `Riesgo potencial`: 5 km, mas tenue.
-
-La intensidad se acentua con el peso ponderado de combustible en 5 km, pero el color base de cada anillo se mantiene estable para que sea comparable entre focos.
-
-Para limpiar la demo, en la barra lateral activa `Confirmar limpieza` y pulsa `Reiniciar historial`. Esto borra las alertas SQLite y las imagenes anotadas de alerta.
-
-Las capas del mapa se controlan desde el sidebar (`ZARI`, `Combustible`, `FIRMS historico`, `Alertas recientes`) para que su estado no se pierda al cambiar de foco o refrescar el dashboard.
-
-El foco muestra una flecha de viento cuando AEMET responde. La flecha sale desde el foco y apunta hacia donde empuja el viento. Al pasar el cursor se muestran velocidad, temperatura y los factores de riesgo asociados a viento y temperatura.
-
-El indice de riesgo no depende solo de estar dentro de ZARI. Se ponderan combustible, FIRMS historico, viento y temperatura; temperaturas altas empiezan a incrementar el factor termico por encima de 25 C y pesan mas a partir de 30 C.
-
-## Probar el flujo completo con video o YouTube desde el frontend
-
-La deteccion de pantalla/video se activa desde el dashboard. El usuario no necesita ejecutar comandos adicionales.
-
-1. Abre http://127.0.0.1:8501.
-2. En la barra lateral, pulsa `Abrir detector de pantalla`.
+1. Abre el dashboard.
+2. Pulsa `Abrir detector de pantalla`.
 3. En la nueva pagina, pulsa `Iniciar captura`.
-4. El navegador pedira compartir una pantalla, ventana o pestana.
-5. Selecciona el video de YouTube, una ventana o la pantalla completa.
-6. Cada pocos segundos el frontend envia un frame a la API.
-7. En video/pantalla no se alerta por un unico frame: la deteccion debe mantenerse durante `ALERT_CONFIRM_SECONDS` segundos, por defecto 5.
-8. Si se confirma, se registra la alerta, se calcula riesgo territorial y se envia Telegram.
-9. Para parar, pulsa `Detener` o deja de compartir pantalla desde el navegador.
+4. El navegador pedira compartir pantalla, ventana o pestana.
+5. Selecciona el video de YouTube, la ventana o la pantalla completa.
+6. Deja correr el video. El navegador enviara frames a la API.
+7. Si una deteccion se mantiene durante `ALERT_CONFIRM_SECONDS`, se crea alerta.
+8. Para parar, pulsa `Detener` o deja de compartir pantalla desde el navegador.
 
-La pagina de captura tambien puede abrirse directamente en http://127.0.0.1:8000/screen-capture.
+En local funciona con `localhost` o `127.0.0.1`. En remoto, la captura de pantalla del navegador normalmente necesita HTTPS o una configuracion segura del navegador.
 
-Nota: la captura de pantalla del navegador requiere un contexto seguro. En local funciona con `localhost`/`127.0.0.1`; en servidor remoto conviene servir por HTTPS.
+## Uso del mapa
 
-## Inferencia directa sin API
+- Click en el mapa: cambia el foco y recalcula el riesgo territorial.
+- Anillos: riesgo inmediato, alto y potencial alrededor del foco seleccionado.
+- Capas: ZARI, combustible, FIRMS historico y alertas recientes.
+- Flecha de viento: aparece cuando AEMET responde; al pasar el cursor muestra viento, temperatura y efecto en riesgo.
+- `Reiniciar historial`: borra alertas SQLite e imagenes anotadas generadas.
 
-`inference.py` sirve para probar el modelo sin dashboard ni registro de alertas.
+## Ejecucion con Docker local
+
+Docker usa el modelo ONNX y no instala PyTorch ni Ultralytics.
 
 ```powershell
-.\.venv\Scripts\python.exe inference.py --source ruta\imagen.jpg --model exports\best_fire_smoke.pt
-.\.venv\Scripts\python.exe inference.py --source ruta\video.mp4 --model exports\best_fire_smoke.pt --show
-.\.venv\Scripts\python.exe inference.py --source screen --model exports\best_fire_smoke.pt --conf 0.15 --show
+git clone https://github.com/LHdezLP/sistema_alerta_forestal_petproject.git
+cd sistema_alerta_forestal_petproject\deploy
+Copy-Item .env.example .env
+notepad .env
+docker compose up -d --build
+docker compose ps
 ```
 
-Para humo puede ser util bajar el umbral a `--conf 0.10` o `--conf 0.15`. Para fuego, `0.25` suele ser mas conservador.
+URLs:
 
-## Estado del modelo actual
+- API: http://localhost:8000
+- Dashboard: http://localhost:8501
 
-El modelo activo conservado para pruebas es:
+Comprobaciones:
 
-- PyTorch: `exports/best_fire_smoke.pt`
-- ONNX API: `exports/best_fire_smoke.onnx`
-- Run origen: `models/runs/fire_smoke_v3_balanced`
+```powershell
+curl.exe http://localhost:8000/health
+curl.exe http://localhost:8501/_stcore/health
+```
 
-Metricas de test del modelo actual:
+Parar:
+
+```powershell
+docker compose down
+```
+
+Ver logs:
+
+```powershell
+docker compose logs -f
+```
+
+## Despliegue en Isard
+
+Ruta recomendada: maquina Ubuntu con Docker Compose.
+
+1. Entra en tu escritorio/maquina Ubuntu de Isard.
+2. Abre terminal.
+3. Instala Docker si no esta instalado:
+
+```bash
+docker --version
+docker compose version
+```
+
+Si esos comandos fallan, instala Docker siguiendo la politica del centro. En Ubuntu suele ser:
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl git
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+```
+
+Cierra sesion y vuelve a entrar para que el grupo `docker` aplique.
+
+4. Clona el repositorio:
+
+```bash
+git clone https://github.com/LHdezLP/sistema_alerta_forestal_petproject.git
+cd sistema_alerta_forestal_petproject/deploy
+```
+
+5. Configura variables:
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+En Isard cambia al menos:
+
+```env
+API_PUBLIC_URL=http://IP_O_DOMINIO_DE_ISARD:8000
+API_PORT=8000
+DASHBOARD_PORT=8501
+```
+
+Y rellena si quieres:
+
+```env
+AEMET_API_KEY=...
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_ID=...
+```
+
+6. Levanta servicios:
+
+```bash
+docker compose up -d --build
+```
+
+7. Comprueba:
+
+```bash
+docker compose ps
+docker compose logs -f
+curl http://localhost:8000/health
+curl http://localhost:8501/_stcore/health
+```
+
+8. Abre desde navegador:
+
+- Dashboard: `http://IP_O_DOMINIO_DE_ISARD:8501`
+- API: `http://IP_O_DOMINIO_DE_ISARD:8000/health`
+- Captura: `http://IP_O_DOMINIO_DE_ISARD:8000/screen-capture`
+
+9. Si no carga desde fuera, revisa en Isard:
+
+- Que los puertos `8000` y `8501` esten publicados o permitidos.
+- Que la maquina no tenga firewall bloqueando esos puertos.
+- Que `API_PUBLIC_URL` apunte a la URL visible desde tu navegador, no a `localhost`.
+
+Comandos utiles en Isard:
+
+```bash
+docker compose restart
+docker compose logs api -f
+docker compose logs dashboard -f
+docker compose down
+git pull
+docker compose up -d --build
+```
+
+## Despliegue en Hugging Face Spaces
+
+Usa un Space con SDK Docker. El `Dockerfile` de la raiz lanza FastAPI, Streamlit y Nginx en el puerto `7860`.
+
+1. Entra en https://huggingface.co/spaces.
+2. Pulsa `Create new Space`.
+3. Elige:
+   - Owner: tu usuario.
+   - Space name: por ejemplo `sistema-alerta-forestal`.
+   - SDK: `Docker`.
+   - Hardware: CPU basic para demo.
+   - Visibility: public o private.
+4. En `Settings > Variables and secrets`, crea secretos:
+   - `AEMET_API_KEY`
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_CHAT_ID`
+5. Desde local, anade el Space como remoto y empuja:
+
+```powershell
+git remote add hf https://huggingface.co/spaces/TU_USUARIO/sistema-alerta-forestal
+git push hf main
+```
+
+Si pide credenciales:
+
+- Usuario: tu usuario de Hugging Face.
+- Password: token de Hugging Face con permiso de escritura.
+
+No pegues el token en archivos ni en el chat.
+
+6. En la pagina del Space, abre `Logs` y espera a que termine el build.
+7. Cuando aparezca `Running`, abre la URL publica del Space.
+
+Notas importantes:
+
+- Hugging Face expone un unico puerto. Por eso el Dockerfile raiz usa Nginx en `7860`.
+- El historial SQLite y las imagenes de alerta no deben considerarse persistentes en Spaces sin almacenamiento persistente.
+- La captura de pantalla desde navegador puede depender de HTTPS y permisos del navegador. En Hugging Face deberia funcionar mejor que en HTTP puro porque el Space se sirve por HTTPS.
+
+## Entrenamiento
+
+Los notebooks de entrenamiento estan en `notebooks/`. El modelo activo del repositorio es el modelo de demo actual, no los candidatos descartados.
+
+Orden recomendado:
+
+1. `notebooks/00_exploracion_dataset.ipynb`
+2. `notebooks/01_preparacion_dataset.ipynb`
+3. `notebooks/02_entrenamiento_evaluacion.ipynb`
+4. `notebooks/03_analisis_territorial.ipynb`
+
+Las fases, metricas, problemas detectados y mejoras sugeridas estan documentadas en `Seguimiento.md`.
+
+## Estado del modelo activo
+
+Modelo activo:
+
+- `exports/best_fire_smoke.pt`
+- `exports/best_fire_smoke.onnx`
+
+Metricas de test del modelo activo:
 
 | Clase | Precision | Recall | mAP50 | mAP50-95 |
 |---|---:|---:|---:|---:|
@@ -187,52 +322,8 @@ Metricas de test del modelo actual:
 | smoke | 0.832 | 0.582 | 0.678 | 0.289 |
 | media | 0.725 | 0.596 | 0.650 | 0.300 |
 
-Observaciones manuales:
+Limitaciones observadas:
 
-- El modelo detecta llamas con bastante sensibilidad.
 - A veces clasifica humo como fuego.
-- Hay falsos positivos de fuego sobre objetos rojizos y baja resolucion, como adornos o banderines.
-- En pantalla normal, antes de reproducir video, no se observaron detecciones espurias.
-
-## Entrenamiento y notebooks
-
-Orden recomendado:
-
-1. `notebooks/00_exploracion_dataset.ipynb`: explora datasets y formatos.
-2. `notebooks/01_preparacion_dataset.ipynb`: genera `data/processed/` y `data/dataset.yaml`.
-3. `notebooks/02_entrenamiento_evaluacion.ipynb`: entrena, evalua y exporta.
-4. `notebooks/03_analisis_territorial.ipynb`: analiza FIRMS, ZARI, combustible y exporta GeoJSON.
-
-Todas las decisiones de dataset, entrenamiento, resultados e interpretacion se documentan en `Seguimiento.md`.
-
-## Datos usados
-
-- D-Fire: imagenes con etiquetas YOLO de fuego y humo.
-- Open Wildfire Smoke Dataset: refuerzo de humo forestal.
-- Cloud/Fog Dataset: negativos para reducir falsos positivos.
-- NASA FIRMS: hotspots historicos.
-- ZARI Canarias: zonas de alto riesgo de incendio.
-- Modelos de combustible por isla: combustible de Gran Canaria.
-
-Los datos originales se mantienen en `data/raw/` y no deben modificarse.
-
-## Despliegue
-
-La carpeta `deploy/` contiene:
-
-- `Dockerfile`
-- `docker-compose.yml`
-- `requirements_prod.txt`
-- `.env.example` con placeholders
-- `README_deploy.md`
-
-Ademas, el `Dockerfile` de la raiz esta pensado para Hugging Face Spaces Docker: publica una unica app por el puerto `7860` y enruta internamente dashboard + API.
-
-Para produccion se prioriza ONNX (`exports/best_fire_smoke.onnx`) y se evita depender de `torch` o `ultralytics` en la API desplegada.
-
-Rutas recomendadas:
-
-- IsardVDI: clonar el proyecto desde GitHub y levantar `api` + `dashboard` con Docker Compose.
-- Hugging Face: Space tipo Docker, no Streamlit simple, porque necesitamos servir API y dashboard.
-- Azure: Azure Container Apps si basta CPU y despliegue containerizado.
-- AWS: revisar App Runner solo si la cuenta ya permite usarlo; AWS indica que App Runner no aceptara nuevos clientes desde el 30 de abril de 2026. Como alternativa, ECS/Fargate o una VM academica.
+- Puede marcar objetos rojizos de baja resolucion como fuego.
+- Detecta llamas con sensibilidad razonable, pero aun necesita mejora de precision y separacion fuego/humo.

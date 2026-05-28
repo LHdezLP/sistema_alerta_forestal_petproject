@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY exports/best_fire_smoke.onnx ./exports/
 COPY api/ ./api/
 COPY geo_pipeline/ ./geo_pipeline/
 COPY dashboard/ ./dashboard/
-COPY "Datasets Territoriales/" "./Datasets Territoriales/"
+COPY ["Datasets Territoriales/", "Datasets Territoriales/"]
 
 EXPOSE 8000
 EXPOSE 8501

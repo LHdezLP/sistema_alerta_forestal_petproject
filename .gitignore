@@ -21,6 +21,7 @@ Images/
 data/raw/
 data/processed/
 data/processed_*/
+LuisHernandezRodriguez_Datasets Elegidos.docx.pdf
 
 # En despliegue solo se usa Gran Canaria, ZARI y NASA FIRMS
 Datasets Territoriales/Modelos de Combustible por Isla/*
