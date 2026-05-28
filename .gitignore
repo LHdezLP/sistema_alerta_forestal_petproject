@@ -41,6 +41,7 @@ exports/*
 !exports/best_fire_smoke.onnx
 
 # Archivos temporales del sistema/editor
+.vscode/
 .DS_Store
 Thumbs.db
 *.tmp
