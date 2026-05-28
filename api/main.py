@@ -316,6 +316,27 @@ def clear_temporal_session(session_id: str):
     return {"status": "cleared", "session_id": session_id}
 
 
+@app.post("/simulate-alert")
+def simulate_alert(background_tasks: BackgroundTasks, clase: str = "fire", confianza: float = 0.99):
+    """Crea una alerta de demostracion sin depender de una deteccion del modelo."""
+    clase = clase if clase in {"fire", "smoke"} else "fire"
+    foco = _random_point_near_camera() if SIMULATE_RANDOM_ALERT_POINT else {"lat": CAMERA["lat"], "lon": CAMERA["lon"]}
+    risk_payload = _risk(lat=foco["lat"], lon=foco["lon"])
+    idx = risk_payload["indice_riesgo"]
+    alert_id = alerts_db.insertar_alerta(clase, confianza, None, foco["lat"], foco["lon"], idx["indice"], idx["nivel"])
+    background_tasks.add_task(enviar_alerta_telegram, clase, confianza, idx, None)
+    STATE["last_alert_ts"] = time.time()
+    return {
+        "status": "ok",
+        "id": alert_id,
+        "clase": clase,
+        "confianza": confianza,
+        "foco": risk_payload["foco"],
+        "indice_riesgo": idx,
+        "nota": "Alerta simulada: no procede de inferencia ni guarda imagen anotada.",
+    }
+
+
 @app.post("/predict")
 async def predict(
     background_tasks: BackgroundTasks,

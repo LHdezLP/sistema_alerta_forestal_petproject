@@ -41,6 +41,16 @@ def api_delete(path: str, default):
         return default
 
 
+def api_post(path: str, default):
+    try:
+        r = requests.post(f"{API_INTERNAL_URL}{path}", timeout=15)
+        r.raise_for_status()
+        return r.json()
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"No se pudo completar la accion: {exc}")
+        return default
+
+
 if "focus" not in st.session_state:
     st.session_state["focus"] = {"lat": CAMERA["lat"], "lon": CAMERA["lon"]}
 if "layers" not in st.session_state:
@@ -80,7 +90,12 @@ with st.sidebar:
                 st.image(f"{API_PUBLIC_URL}{result['imagen_resultado_url']}", use_container_width=True)
 
     if st.checkbox("Modo simulacion de alerta"):
-        st.info("Simulacion visual activa. Para Telegram usa /predict con una imagen positiva.")
+        st.caption("Crea una alerta de demostracion sin usar el modelo. Sirve para probar historial, mapa, foco aleatorio y Telegram.")
+        if st.button("Generar alerta simulada"):
+            result = api_post("/simulate-alert?clase=fire&confianza=0.99", {})
+            if result.get("status") == "ok":
+                st.success(f"Alerta simulada creada: {result.get('indice_riesgo', {}).get('nivel', 'N/D')}")
+                st.rerun()
 
     st.divider()
     st.subheader("Capas del mapa")

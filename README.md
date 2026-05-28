@@ -114,6 +114,27 @@ Si `/health` devuelve `{"status":"ok","model_loaded":true,"db_ok":true}`, la API
 
 La imagen no se reenvia automaticamente en cada refresco: solo se analiza al pulsar el boton.
 
+Logica de alerta en imagen:
+
+- Si `/predict` devuelve al menos una deteccion por encima de umbral, se registra alerta.
+- No se exige persistencia temporal porque una imagen estatica no tiene duracion.
+- El foco se situa en una coordenada aleatoria dentro de 5 km de la camara si `SIMULATE_RANDOM_ALERT_POINT=1`.
+- La alerta puede no enviarse a Telegram si faltan credenciales o si Telegram rechaza la peticion.
+
+## Modo simulacion de alerta
+
+El modo simulacion sirve para probar el flujo territorial sin depender del modelo. Al activarlo aparece el boton `Generar alerta simulada`.
+
+Al pulsarlo:
+
+- No se analiza ninguna imagen.
+- Se crea una alerta artificial de clase `fire`.
+- Se calcula el riesgo territorial del foco simulado.
+- Se inserta en el historial.
+- Si Telegram esta configurado, se envia un mensaje sin imagen anotada.
+
+Sirve para comprobar mapa, historial, foco aleatorio, indice territorial y Telegram. No sirve para medir la calidad del modelo.
+
 ## Probar un video o YouTube desde el frontend
 
 1. Abre el dashboard.
@@ -127,6 +148,16 @@ La imagen no se reenvia automaticamente en cada refresco: solo se analiza al pul
 
 En local funciona con `localhost` o `127.0.0.1`. En remoto, la captura de pantalla del navegador normalmente necesita HTTPS o una configuracion segura del navegador.
 
+Logica de alerta en pantalla/video:
+
+- El navegador captura un frame cada `Intervalo (s)`, por defecto 2 segundos.
+- Cada frame se envia a `/predict` con `temporal_confirm=true`.
+- Puede haber detecciones visibles sin alerta.
+- Para crear alerta, la misma clase (`fire` o `smoke`) debe mantenerse durante `ALERT_CONFIRM_SECONDS`, por defecto 5 segundos.
+- Si entre detecciones pasan mas de `TEMPORAL_MAX_GAP_SECONDS`, por defecto 4 segundos, la sesion temporal se reinicia.
+- Tras una alerta, `ALERT_COOLDOWN_SECONDS`, por defecto 30 segundos, evita spam de alertas repetidas.
+- Con intervalo de 2 segundos normalmente hacen falta varios frames positivos seguidos para confirmar. Si el video cambia rapido, baja el intervalo a 1 segundo.
+
 ## Uso del mapa
 
 - Click en el mapa: cambia el foco y recalcula el riesgo territorial.
@@ -134,6 +165,27 @@ En local funciona con `localhost` o `127.0.0.1`. En remoto, la captura de pantal
 - Capas: ZARI, combustible, FIRMS historico y alertas recientes.
 - Flecha de viento: aparece cuando AEMET responde; al pasar el cursor muestra viento, temperatura y efecto en riesgo.
 - `Reiniciar historial`: borra alertas SQLite e imagenes anotadas generadas.
+
+Paneles del dashboard:
+
+- `Riesgo del foco`: indice 0-1 calculado para el foco seleccionado o para el foco de alerta.
+- `Meteorologia`: ultima observacion AEMET cercana a la camara; viento y temperatura afectan al indice.
+- `Contexto territorial`: ZARI, zona, combustible principal, peligrosidad ponderada y FIRMS historico.
+- `Historial de alertas`: alertas SQLite recientes generadas por imagen, pantalla/video o simulacion.
+
+Indice territorial:
+
+- ZARI aporta contexto estructural.
+- Combustible ponderado en 5 km es el factor de mayor peso.
+- FIRMS historico representa recurrencia de focos.
+- Viento y temperatura elevan el riesgo operativo; la temperatura empieza a pesar por encima de 25 C y se nota mas desde 30 C.
+- Los combustibles `0` y `11` se consideran sin combustible/no combustibles y no dominan la lista de combustibles presentes.
+
+Modelos de combustible:
+
+- La capa original de Gran Canaria usa codigos numericos `mc`.
+- Cuando existe equivalencia operativa clara, el dashboard muestra descripciones como `Pastizal/herbaceas`, `Matorral/pastizal`, `Matorral-arbolado` o `Arbolado con sotobosque`.
+- Algunas etiquetas son agrupaciones descriptivas para hacer legible la demo; el codigo original se mantiene en la tabla para trazabilidad.
 
 ## Ejecucion con Docker local
 

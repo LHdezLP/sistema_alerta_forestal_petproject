@@ -1074,3 +1074,34 @@ Decision:
 
 - La ruta recomendada para Isard queda como Docker Compose.
 - La ruta recomendada para Hugging Face queda como Space Docker usando el Dockerfile raiz.
+
+## Fase 9 - Clarificacion funcional del dashboard
+
+Fecha: 2026-05-28
+
+Objetivo: dejar explicada y afinada la logica de uso del dashboard tras las pruebas de despliegue.
+
+Cambios realizados:
+
+- El antiguo `Modo simulacion de alerta` solo mostraba un aviso y no aportaba valor operativo. Se ha convertido en una accion real: `Generar alerta simulada`.
+- La alerta simulada no usa el modelo ni analiza imagenes. Inserta una alerta artificial, calcula riesgo territorial, usa foco aleatorio si esta activado y permite probar mapa, historial y Telegram.
+- Se ha documentado que la prueba con imagen alerta por confianza, sin confirmacion temporal.
+- Se ha documentado que la prueba con pantalla/video usa confirmacion temporal: una deteccion puede verse en JSON sin generar alerta hasta mantenerse durante `ALERT_CONFIRM_SECONDS`.
+- Se ha aclarado la funcion del cooldown `ALERT_COOLDOWN_SECONDS` para evitar spam de alertas.
+- Se han mejorado las descripciones de modelos de combustible numericos para que no aparezcan solo como `Modelo combustible canario N`.
+- Se ha regenerado `dashboard/static/geo/combustible_gc.geojson` para que el mapa y los tooltips usen descripciones mas legibles.
+
+Logica funcional actual:
+
+- `Probar inferencia con imagen`: flujo directo de validacion del modelo y registro de alerta por umbral.
+- `Modo simulacion de alerta`: flujo de demostracion territorial y Telegram sin inferencia.
+- `Abrir detector de pantalla`: flujo de video/pantalla con deteccion por frames y confirmacion temporal.
+- `Mapa territorial`: seleccion de foco, anillos de riesgo, capas territoriales y alertas recientes.
+- `Riesgo del foco`: indice compuesto por ZARI, combustible, FIRMS historico, viento y temperatura.
+- `Contexto territorial`: resume ZARI, zona, combustible principal, peligrosidad ponderada y distribucion de combustibles presentes.
+
+Limitaciones reconocidas:
+
+- Las etiquetas de combustible son agrupaciones descriptivas para hacer legible el dashboard; el codigo `mc` original se conserva para trazabilidad.
+- Para memoria academica conviene citar la fuente oficial de la cartografia de modelos de combustible si se quiere justificar cada codigo con precision normativa.
+- En pantalla/video puede haber detecciones sin alerta si no persisten el tiempo suficiente, si la clase alterna entre `fire` y `smoke`, si hay huecos mayores que `TEMPORAL_MAX_GAP_SECONDS` o si actua el cooldown.
