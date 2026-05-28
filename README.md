@@ -293,6 +293,51 @@ git pull
 docker compose up -d --build
 ```
 
+### Arranque habitual en Isard
+
+Cuando vuelvas a abrir la maquina de Isard otro dia, normalmente no hace falta reinstalar nada. Entra en la terminal y ejecuta:
+
+```bash
+cd ~/Desktop/sistema_alerta_forestal_petproject/deploy
+sudo docker compose up -d
+```
+
+Si has cambiado codigo en GitHub y quieres actualizar antes de arrancar:
+
+```bash
+cd ~/Desktop/sistema_alerta_forestal_petproject
+git pull
+cd deploy
+sudo docker compose up -d --build
+```
+
+Comprobar que esta vivo:
+
+```bash
+sudo docker compose ps
+curl http://localhost:8000/health
+curl http://localhost:8501/_stcore/health
+```
+
+Abrir desde el navegador:
+
+```text
+http://IP_O_DOMINIO_DE_ISARD:8501
+```
+
+Parar la aplicacion:
+
+```bash
+cd ~/Desktop/sistema_alerta_forestal_petproject/deploy
+sudo docker compose down
+```
+
+Ver logs si algo falla:
+
+```bash
+sudo docker compose logs -f
+```
+
 ## Despliegue en Hugging Face Spaces
 
 Usa un Space con SDK Docker. El `Dockerfile` de la raiz lanza FastAPI, Streamlit y Nginx en el puerto `7860`.
@@ -322,9 +367,33 @@ git push hf main:main
 Si pide credenciales:
 
 - Usuario: tu usuario de Hugging Face.
-- Password: token de Hugging Face con permiso de escritura.
+- Password: token de Hugging Face con permiso de escritura. La contrasena normal ya no sirve para `git push`.
 
 No pegues el token en archivos ni en el chat.
+
+Crear token:
+
+1. En Hugging Face, abre tu perfil.
+2. Entra en `Settings`.
+3. Abre `Access Tokens`.
+4. Crea un token con permiso de escritura (`Write`) o un fine-grained token con permiso de escritura sobre el Space.
+5. Copia el token una sola vez y usalo como password cuando Git lo pida.
+
+Si Git no pregunta de nuevo y sigue fallando por credenciales antiguas en Windows, borra la credencial cacheada:
+
+```powershell
+@"
+protocol=https
+host=huggingface.co
+
+"@ | git credential-manager erase
+```
+
+Luego repite:
+
+```powershell
+git push hf main:main
+```
 
 Si el Space fue creado con plantilla `Blank` y ya tenia un commit inicial, puede rechazar el primer push. En ese caso, solo para un Space recien creado:
 
