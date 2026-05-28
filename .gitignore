@@ -1,0 +1,46 @@
+# Entorno local y secretos
+.env
+.env.*
+!deploy/.env.example
+.venv/
+
+# Python / notebooks
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Logs y salidas generadas
+logs/
+runs/
+inference_results/
+api/alerts.db
+api/alert_images/
+
+# Datasets crudos y datasets procesados reproducibles
+Images/
+data/raw/
+data/processed/
+data/processed_*/
+
+# En despliegue solo se usa Gran Canaria, ZARI y NASA FIRMS
+Datasets Territoriales/Modelos de Combustible por Isla/*
+!Datasets Territoriales/Modelos de Combustible por Isla/GRAN CANARIA/
+!Datasets Territoriales/Modelos de Combustible por Isla/GRAN CANARIA/**
+
+# Entrenamientos pesados
+models/runs/
+models/runs_eval/
+*.pt
+*.onnx
+
+# Mantener solo el modelo activo de demo/despliegue
+!exports/
+exports/*
+!exports/best_fire_smoke.pt
+!exports/best_fire_smoke.onnx
+
+# Archivos temporales del sistema/editor
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak

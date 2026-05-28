@@ -1,0 +1,32 @@
+.git
+.gitignore
+.dockerignore
+.env
+.env.*
+.venv
+__pycache__
+*.pyc
+.ipynb_checkpoints
+
+Images
+data/raw
+data/processed
+data/processed_*
+Datasets Territoriales/Modelos de Combustible por Isla/GOMERA
+Datasets Territoriales/Modelos de Combustible por Isla/HIERRO
+Datasets Territoriales/Modelos de Combustible por Isla/LA PALMA
+Datasets Territoriales/Modelos de Combustible por Isla/TENERIFE
+models/runs
+models/runs_eval
+runs
+logs
+inference_results
+api/alerts.db
+api/alert_images
+
+*.pt
+*.onnx
+!exports/best_fire_smoke.pt
+!exports/best_fire_smoke.onnx
+
+LuisHernandezRodriguez_Datasets Elegidos.docx.pdf

@@ -1,0 +1,8 @@
+path: C:/Users/luish/Documents/CEIABD/Proyecto/data/processed
+train: images/train
+val: images/val
+test: images/test
+nc: 2
+names:
+  0: fire
+  1: smoke
