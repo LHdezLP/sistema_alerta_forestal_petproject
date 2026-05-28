@@ -31,6 +31,7 @@ Para ejecucion local nativa en Windows:
 
 - Python 3.11 o superior.
 - Git.
+- Git LFS, necesario para descargar el modelo y algunos datos territoriales binarios.
 - Navegador moderno.
 - Opcional: GPU NVIDIA/CUDA para entrenamiento. La aplicacion desplegada usa ONNX CPU.
 
@@ -73,6 +74,7 @@ Desde PowerShell:
 ```powershell
 git clone https://github.com/LHdezLP/sistema_alerta_forestal_petproject.git
 cd sistema_alerta_forestal_petproject
+git lfs pull
 python -m venv .venv
 .\.venv\Scripts\activate
 python -m pip install --upgrade pip
