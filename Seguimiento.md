@@ -1016,3 +1016,32 @@ models/runs_eval/v6_behavior_diagnostics_conf015.json
 v6 es el primer candidato realmente serio para sustituir al modelo actual, pero no se promociona automaticamente. La mejora en humo y recall es clara, y el test nuevo mejora mucho, pero la bajada de precision y el aumento de predicciones `smoke` en D-Fire requieren una prueba visual con el flujo del dashboard y videos antes de cambiar `exports/best_fire_smoke.pt`.
 
 Siguiente paso recomendado: probar el dashboard con v6 como modelo temporal, sin sobrescribir v3. Si en video reduce humo marcado como fuego y no aumenta demasiado falsas alarmas, entonces se puede promocionar v6 como nuevo modelo de produccion.
+
+## Fase 7 - Publicacion en GitHub y preparacion de despliegue
+
+Fecha: 2026-05-28
+
+Objetivo: publicar una version desplegable del proyecto sin secretos ni datos pesados reproducibles.
+
+Acciones:
+
+- Inicializado repositorio Git local y remoto `https://github.com/LHdezLP/sistema_alerta_forestal_petproject.git`.
+- Creado `.gitignore` para excluir `.env`, `.venv`, datasets crudos, datasets procesados, runs de entrenamiento, alertas generadas y modelos candidatos.
+- Sustituidas credenciales reales detectadas en `agent_02_dashboard.md` por placeholders antes del commit.
+- Subido commit inicial `2a3166d` a la rama `main`.
+- Incluido el modelo activo actual (`exports/best_fire_smoke.pt` y `.onnx`) para que el aplicativo sea ejecutable tras clonar.
+- Incluidos datos territoriales necesarios para la demo de Gran Canaria: ZARI, NASA FIRMS y combustible de Gran Canaria. Se dejan fuera capas de combustible de otras islas para reducir peso.
+- Preparado Docker Compose para Isard/servidor Linux con API y dashboard separados.
+- Preparado `Dockerfile` raiz para Hugging Face Spaces Docker, sirviendo API + Streamlit a traves de Nginx en el puerto `7860`.
+
+Validacion:
+
+- `python -m compileall api dashboard geo_pipeline scripts -q`: correcto.
+- `docker compose -f deploy/docker-compose.yml config` usando un `.env` temporal basado en `.env.example`: correcto.
+- `git grep` sobre el commit para patrones de token/API: sin credenciales reales tras la sanitizacion.
+- API local `http://127.0.0.1:8000/health`: `status=ok`, modelo cargado.
+- Dashboard local `http://127.0.0.1:8501/_stcore/health`: `ok`.
+
+Limitacion:
+
+- No se pudo construir la imagen Docker localmente porque Docker Desktop no estaba levantado en Windows. La prueba real de contenedor queda pendiente en Isard o al iniciar Docker Desktop.
